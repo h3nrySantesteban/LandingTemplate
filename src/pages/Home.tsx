@@ -69,7 +69,6 @@ const PILLARS: Pillar[] = [
 ];
 
 export const Home: React.FC = () => {
-  const [isAutoplayPaused, setIsAutoplayPaused] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [isNosotrosSlide, setIsNosotrosSlide] = useState(window.innerWidth <= 640);
 
@@ -89,7 +88,7 @@ export const Home: React.FC = () => {
   // is still loading (empty array); the loading skeleton is rendered instead
   // of the carousel markup until items actually arrive, so index 0 is never
   // read from an empty items array.
-  const courseCarousel = useInfiniteCarousel(Math.max(courses.length, 1), cardsPerView);
+  const courseCarousel = useInfiniteCarousel(Math.max(courses.length, 1), cardsPerView, { autoplayMs: 5000 });
   const eventCarousel = useInfiniteCarousel(Math.max(events.length, 1), cardsPerView);
   const newsCarousel = useInfiniteCarousel(Math.max(news.length, 1), cardsPerView);
 
@@ -105,23 +104,7 @@ export const Home: React.FC = () => {
     }
     return pages.length > 0 ? pages : [[]];
   }, [sponsors]);
-  const [isSponsorsPaused, setIsSponsorsPaused] = useState(false);
-  const sponsorCarousel = useInfiniteCarousel(sponsorPages.length, 1);
-
-  // Drag states for Courses
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStartX, setDragStartX] = useState(0);
-  const [dragOffset, setDragOffset] = useState(0);
-
-  // Drag states for Events
-  const [isEventDragging, setIsEventDragging] = useState(false);
-  const [eventDragStartX, setEventDragStartX] = useState(0);
-  const [eventDragOffset, setEventDragOffset] = useState(0);
-
-  // Drag states for News
-  const [isNewsDragging, setIsNewsDragging] = useState(false);
-  const [newsDragStartX, setNewsDragStartX] = useState(0);
-  const [newsDragOffset, setNewsDragOffset] = useState(0);
+  const sponsorCarousel = useInfiniteCarousel(sponsorPages.length, 1, { autoplayMs: 3500, durationMs: 800, drag: false });
 
   // States and Drag states for Nosotros pillars
   const [currentNosotrosIndex, setCurrentNosotrosIndex] = useState(0);
@@ -171,104 +154,6 @@ export const Home: React.FC = () => {
     };
   }, []);
 
-  // Courses drag handlers
-  const handlePointerDown = (e: React.PointerEvent) => {
-    if (e.button !== 0) return;
-    if ((e.target as HTMLElement).closest('button, a')) return;
-    setIsDragging(true);
-    setDragStartX(e.clientX);
-    setDragOffset(0);
-    setIsAutoplayPaused(true);
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isDragging) return;
-    const currentX = e.clientX;
-    const diff = currentX - dragStartX;
-    setDragOffset(diff);
-  };
-
-  const handlePointerUp = (e: React.PointerEvent) => {
-    if (!isDragging) return;
-    setIsDragging(false);
-    e.currentTarget.releasePointerCapture(e.pointerId);
-
-    const threshold = 60;
-    if (dragOffset < -threshold) {
-      courseCarousel.next();
-    } else if (dragOffset > threshold) {
-      courseCarousel.prev();
-    }
-
-    setDragOffset(0);
-    setIsAutoplayPaused(false);
-  };
-
-  // Events drag handlers
-  const handleEventPointerDown = (e: React.PointerEvent) => {
-    if (e.button !== 0) return;
-    if ((e.target as HTMLElement).closest('button, a')) return;
-    setIsEventDragging(true);
-    setEventDragStartX(e.clientX);
-    setEventDragOffset(0);
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-
-  const handleEventPointerMove = (e: React.PointerEvent) => {
-    if (!isEventDragging) return;
-    const currentX = e.clientX;
-    const diff = currentX - eventDragStartX;
-    setEventDragOffset(diff);
-  };
-
-  const handleEventPointerUp = (e: React.PointerEvent) => {
-    if (!isEventDragging) return;
-    setIsEventDragging(false);
-    e.currentTarget.releasePointerCapture(e.pointerId);
-
-    const threshold = 60;
-    if (eventDragOffset < -threshold) {
-      eventCarousel.next();
-    } else if (eventDragOffset > threshold) {
-      eventCarousel.prev();
-    }
-
-    setEventDragOffset(0);
-  };
-
-  // News drag handlers
-  const handleNewsPointerDown = (e: React.PointerEvent) => {
-    if (e.button !== 0) return;
-    if ((e.target as HTMLElement).closest('button, a')) return;
-    setIsNewsDragging(true);
-    setNewsDragStartX(e.clientX);
-    setNewsDragOffset(0);
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-
-  const handleNewsPointerMove = (e: React.PointerEvent) => {
-    if (!isNewsDragging) return;
-    const currentX = e.clientX;
-    const diff = currentX - newsDragStartX;
-    setNewsDragOffset(diff);
-  };
-
-  const handleNewsPointerUp = (e: React.PointerEvent) => {
-    if (!isNewsDragging) return;
-    setIsNewsDragging(false);
-    e.currentTarget.releasePointerCapture(e.pointerId);
-
-    const threshold = 60;
-    if (newsDragOffset < -threshold) {
-      newsCarousel.next();
-    } else if (newsDragOffset > threshold) {
-      newsCarousel.prev();
-    }
-
-    setNewsDragOffset(0);
-  };
-
   // Nosotros drag handlers
   const handleNosotrosPointerDown = (e: React.PointerEvent) => {
     if (e.button !== 0) return;
@@ -296,22 +181,6 @@ export const Home: React.FC = () => {
     setNosotrosDragOffset(0);
   };
 
-  useEffect(() => {
-    if (isAutoplayPaused) return;
-    const interval = setInterval(() => {
-      courseCarousel.next();
-    }, 5000);
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAutoplayPaused]);
-  useEffect(() => {
-    if (sponsorPages.length <= 1 || isSponsorsPaused) return;
-    const interval = setInterval(() => {
-      sponsorCarousel.next();
-    }, 3500);
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sponsorPages.length, isSponsorsPaused]);
   useEffect(() => {
     const observerOptions = {
       root: null,
@@ -454,38 +323,25 @@ export const Home: React.FC = () => {
         ) : (
         <div
           className="slideshow-wrapper reveal reveal-scale reveal-delay-1"
-          onMouseEnter={() => setIsAutoplayPaused(true)}
-          onMouseLeave={() => setIsAutoplayPaused(false)}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
-          style={{ touchAction: 'pan-y', cursor: isDragging ? 'grabbing' : 'grab' }}
+          aria-label="Cursos"
+          {...courseCarousel.wrapperProps}
         >
           {/* Controls */}
-          <button className="slideshow-arrow prev" onClick={courseCarousel.prev} aria-label="Anterior">
+          {courseCarousel.canNavigate && <button className="slideshow-arrow prev" onClick={courseCarousel.prev} aria-label="Anterior">
             <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-          </button>
+          </button>}
 
-          <button className="slideshow-arrow next" onClick={courseCarousel.next} aria-label="Siguiente">
+          {courseCarousel.canNavigate && <button className="slideshow-arrow next" onClick={courseCarousel.next} aria-label="Siguiente">
             <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-          </button>
+          </button>}
 
           {/* Slides Track Outer */}
           <div className="slideshow-track-outer">
-            <div
-              className="slideshow-track"
-              onTransitionEnd={courseCarousel.handleTransitionEnd}
-              style={{
-                transform: `translateX(calc(-${courseCarousel.extIndex * courseCarousel.percentPerSlide}% + ${dragOffset}px))`,
-                transition: (isDragging || !courseCarousel.transitionEnabled) ? 'none' : 'transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)',
-                pointerEvents: isDragging ? 'none' : 'auto'
-              }}
-            >
+            <div className="slideshow-track" {...courseCarousel.trackProps}>
               {courseCarousel.renderIndices.map((courseIdx, i) => {
                 const course = courses[courseIdx];
                 return (
-                  <div className="slideshow-slide" key={`${course.id}-${i}`}>
+                  <div className="slideshow-slide" key={`${course.id}-${i}`} aria-hidden={courseCarousel.isClone(i) || undefined} inert={courseCarousel.isClone(i)}>
                     <div className={`course-card ${course.isFinished ? 'is-finished' : ''}`}>
                       <div className="course-image-wrapper">
                         <img src={course.imageUrl ?? ''} alt={course.title} className="course-image" draggable="false" />
@@ -503,23 +359,24 @@ export const Home: React.FC = () => {
                         </Link>
                       </div>
                     </div>
-                  </div>
+                    </div>
                 );
               })}
             </div>
           </div>
 
-          {/* Dots Indicators */}
-          <div className="slideshow-dots">
-            {Array.from({ length: courseCarousel.total }).map((_, index) => (
-              <button
-                key={index}
-                className={`slideshow-dot ${index === courseCarousel.activeDot ? 'active' : ''}`}
-                onClick={() => courseCarousel.goToReal(index)}
-                aria-label={`Ir a diapositiva ${index + 1}`}
-              />
-            ))}
-          </div>
+          {courseCarousel.canNavigate && (
+            <div className="slideshow-dots">
+              {Array.from({ length: courseCarousel.total }).map((_, index) => (
+                <button
+                  key={index}
+                  className={`slideshow-dot ${index === courseCarousel.activeDot ? 'active' : ''}`}
+                  onClick={() => courseCarousel.goTo(index)}
+                  aria-label={`Ir a diapositiva ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
         )}
 
@@ -540,36 +397,25 @@ export const Home: React.FC = () => {
         ) : (
         <div
           className="slideshow-wrapper reveal reveal-scale reveal-delay-1"
-          onPointerDown={handleEventPointerDown}
-          onPointerMove={handleEventPointerMove}
-          onPointerUp={handleEventPointerUp}
-          onPointerCancel={handleEventPointerUp}
-          style={{ touchAction: 'pan-y', cursor: isEventDragging ? 'grabbing' : 'grab' }}
+          aria-label="Eventos"
+          {...eventCarousel.wrapperProps}
         >
           {/* Controls */}
-          <button className="slideshow-arrow prev" onClick={eventCarousel.prev} aria-label="Anterior">
+          {eventCarousel.canNavigate && <button className="slideshow-arrow prev" onClick={eventCarousel.prev} aria-label="Anterior">
             <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-          </button>
+          </button>}
 
-          <button className="slideshow-arrow next" onClick={eventCarousel.next} aria-label="Siguiente">
+          {eventCarousel.canNavigate && <button className="slideshow-arrow next" onClick={eventCarousel.next} aria-label="Siguiente">
             <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-          </button>
+          </button>}
 
           {/* Slides Track Outer */}
           <div className="slideshow-track-outer">
-            <div
-              className="slideshow-track"
-              onTransitionEnd={eventCarousel.handleTransitionEnd}
-              style={{
-                transform: `translateX(calc(-${eventCarousel.extIndex * eventCarousel.percentPerSlide}% + ${eventDragOffset}px))`,
-                transition: (isEventDragging || !eventCarousel.transitionEnabled) ? 'none' : 'transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)',
-                pointerEvents: isEventDragging ? 'none' : 'auto'
-              }}
-            >
+            <div className="slideshow-track" {...eventCarousel.trackProps}>
               {eventCarousel.renderIndices.map((eventIdx, i) => {
                 const event = events[eventIdx];
                 return (
-                  <div className="slideshow-slide" key={`${event.id}-${i}`}>
+                  <div className="slideshow-slide" key={`${event.id}-${i}`} aria-hidden={eventCarousel.isClone(i) || undefined} inert={eventCarousel.isClone(i)}>
                     <div className={`event-card ${event.isFinished ? 'is-finished' : ''}`}>
                       <div className="event-image-wrapper">
                         <img src={event.imageUrl ?? ''} alt={event.title} className="event-image" draggable="false" />
@@ -587,23 +433,24 @@ export const Home: React.FC = () => {
                         </Link>
                       </div>
                     </div>
-                  </div>
+                    </div>
                 );
               })}
             </div>
           </div>
 
-          {/* Dots Indicators */}
-          <div className="slideshow-dots">
-            {Array.from({ length: eventCarousel.total }).map((_, index) => (
-              <button
-                key={index}
-                className={`slideshow-dot ${index === eventCarousel.activeDot ? 'active' : ''}`}
-                onClick={() => eventCarousel.goToReal(index)}
-                aria-label={`Ir a diapositiva ${index + 1}`}
-              />
-            ))}
-          </div>
+          {eventCarousel.canNavigate && (
+            <div className="slideshow-dots">
+              {Array.from({ length: eventCarousel.total }).map((_, index) => (
+                <button
+                  key={index}
+                  className={`slideshow-dot ${index === eventCarousel.activeDot ? 'active' : ''}`}
+                  onClick={() => eventCarousel.goTo(index)}
+                  aria-label={`Ir a diapositiva ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
         )}
 
@@ -624,36 +471,25 @@ export const Home: React.FC = () => {
         ) : (
         <div
           className="slideshow-wrapper reveal reveal-scale reveal-delay-1"
-          onPointerDown={handleNewsPointerDown}
-          onPointerMove={handleNewsPointerMove}
-          onPointerUp={handleNewsPointerUp}
-          onPointerCancel={handleNewsPointerUp}
-          style={{ touchAction: 'pan-y', cursor: isNewsDragging ? 'grabbing' : 'grab' }}
+          aria-label="Noticias"
+          {...newsCarousel.wrapperProps}
         >
           {/* Controls */}
-          <button className="slideshow-arrow prev" onClick={newsCarousel.prev} aria-label="Anterior">
+          {newsCarousel.canNavigate && <button className="slideshow-arrow prev" onClick={newsCarousel.prev} aria-label="Anterior">
             <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-          </button>
+          </button>}
 
-          <button className="slideshow-arrow next" onClick={newsCarousel.next} aria-label="Siguiente">
+          {newsCarousel.canNavigate && <button className="slideshow-arrow next" onClick={newsCarousel.next} aria-label="Siguiente">
             <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-          </button>
+          </button>}
 
           {/* Slides Track Outer */}
           <div className="slideshow-track-outer">
-            <div
-              className="slideshow-track"
-              onTransitionEnd={newsCarousel.handleTransitionEnd}
-              style={{
-                transform: `translateX(calc(-${newsCarousel.extIndex * newsCarousel.percentPerSlide}% + ${newsDragOffset}px))`,
-                transition: (isNewsDragging || !newsCarousel.transitionEnabled) ? 'none' : 'transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)',
-                pointerEvents: isNewsDragging ? 'none' : 'auto'
-              }}
-            >
+            <div className="slideshow-track" {...newsCarousel.trackProps}>
               {newsCarousel.renderIndices.map((newsIdx, i) => {
                 const newsItem = news[newsIdx];
                 return (
-                  <div className="slideshow-slide" key={`${newsItem.id}-${i}`}>
+                  <div className="slideshow-slide" key={`${newsItem.id}-${i}`} aria-hidden={newsCarousel.isClone(i) || undefined} inert={newsCarousel.isClone(i)}>
                     <div className="news-card">
                       <div className="news-image-wrapper">
                         <img src={newsItem.imageUrl ?? ''} alt={newsItem.title} className="news-image" draggable="false" />
@@ -671,23 +507,24 @@ export const Home: React.FC = () => {
                         </Link>
                       </div>
                     </div>
-                  </div>
+                    </div>
                 );
               })}
             </div>
           </div>
 
-          {/* Dots Indicators */}
-          <div className="slideshow-dots">
-            {Array.from({ length: newsCarousel.total }).map((_, index) => (
-              <button
-                key={index}
-                className={`slideshow-dot ${index === newsCarousel.activeDot ? 'active' : ''}`}
-                onClick={() => newsCarousel.goToReal(index)}
-                aria-label={`Ir a diapositiva ${index + 1}`}
-              />
-            ))}
-          </div>
+          {newsCarousel.canNavigate && (
+            <div className="slideshow-dots">
+              {Array.from({ length: newsCarousel.total }).map((_, index) => (
+                <button
+                  key={index}
+                  className={`slideshow-dot ${index === newsCarousel.activeDot ? 'active' : ''}`}
+                  onClick={() => newsCarousel.goTo(index)}
+                  aria-label={`Ir a diapositiva ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
         )}
 
@@ -708,19 +545,11 @@ export const Home: React.FC = () => {
           </div>
           <div
             className="sponsors-track-viewport reveal reveal-right reveal-delay-1"
-            onMouseEnter={() => setIsSponsorsPaused(true)}
-            onMouseLeave={() => setIsSponsorsPaused(false)}
+            {...sponsorCarousel.wrapperProps}
           >
-            <div
-              className="sponsors-track-slider"
-              onTransitionEnd={sponsorCarousel.handleTransitionEnd}
-              style={{
-                transform: `translateX(-${sponsorCarousel.extIndex * sponsorCarousel.percentPerSlide}%)`,
-                transition: !sponsorCarousel.transitionEnabled ? 'none' : 'transform 0.8s cubic-bezier(0.25, 1, 0.5, 1)',
-              }}
-            >
+            <div className="sponsors-track-slider" {...sponsorCarousel.trackProps}>
               {sponsorCarousel.renderIndices.map((pageIdx, i) => (
-                <div className="sponsors-track" key={`sponsors-page-${pageIdx}-${i}`}>
+                <div className="sponsors-track" key={`sponsors-page-${pageIdx}-${i}`} aria-hidden={sponsorCarousel.isClone(i) || undefined} inert={sponsorCarousel.isClone(i)}>
                   {sponsorPages[pageIdx].map((sponsor) => (
                     <div className="sponsor-item" key={sponsor.id}>
                       {sponsor.url ? (

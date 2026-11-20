@@ -113,27 +113,20 @@ export const ContentDetail: React.FC<ContentDetailProps> = ({ table }) => {
           {latestNews.length > 0 && (
             <section className="content-detail-latest-news">
               <h2 className="section-title">Últimas Noticias</h2>
-              <div className="slideshow-wrapper">
-                <button className="slideshow-arrow prev" onClick={newsCarousel.prev} aria-label="Anterior">
+              <div className="slideshow-wrapper" aria-label="Últimas noticias" {...newsCarousel.wrapperProps}>
+                {newsCarousel.canNavigate && <button className="slideshow-arrow prev" onClick={newsCarousel.prev} aria-label="Anterior">
                   <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                </button>
-                <button className="slideshow-arrow next" onClick={newsCarousel.next} aria-label="Siguiente">
+                </button>}
+                {newsCarousel.canNavigate && <button className="slideshow-arrow next" onClick={newsCarousel.next} aria-label="Siguiente">
                   <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                </button>
+                </button>}
 
                 <div className="slideshow-track-outer">
-                  <div
-                    className="slideshow-track"
-                    onTransitionEnd={newsCarousel.handleTransitionEnd}
-                    style={{
-                      transform: `translateX(-${newsCarousel.extIndex * newsCarousel.percentPerSlide}%)`,
-                      transition: !newsCarousel.transitionEnabled ? 'none' : 'transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)',
-                    }}
-                  >
+                  <div className="slideshow-track" {...newsCarousel.trackProps}>
                     {newsCarousel.renderIndices.map((newsIdx, i) => {
                       const newsItem = latestNews[newsIdx];
                       return (
-                        <div className="slideshow-slide" key={`${newsItem.id}-${i}`}>
+                        <div className="slideshow-slide" key={`${newsItem.id}-${i}`} aria-hidden={newsCarousel.isClone(i) || undefined} inert={newsCarousel.isClone(i)}>
                           <div className="news-card">
                             <div className="news-image-wrapper">
                               <img src={newsItem.imageUrl ?? ''} alt={newsItem.title} className="news-image" draggable="false" />
@@ -151,22 +144,24 @@ export const ContentDetail: React.FC<ContentDetailProps> = ({ table }) => {
                               </Link>
                             </div>
                           </div>
-                        </div>
+                          </div>
                       );
                     })}
                   </div>
                 </div>
 
-                <div className="slideshow-dots">
-                  {Array.from({ length: newsCarousel.total }).map((_, index) => (
-                    <button
-                      key={index}
-                      className={`slideshow-dot ${index === newsCarousel.activeDot ? 'active' : ''}`}
-                      onClick={() => newsCarousel.goToReal(index)}
-                      aria-label={`Ir a diapositiva ${index + 1}`}
-                    />
-                  ))}
-                </div>
+                {newsCarousel.canNavigate && (
+                  <div className="slideshow-dots">
+                    {Array.from({ length: newsCarousel.total }).map((_, index) => (
+                      <button
+                        key={index}
+                        className={`slideshow-dot ${index === newsCarousel.activeDot ? 'active' : ''}`}
+                        onClick={() => newsCarousel.goTo(index)}
+                        aria-label={`Ir a diapositiva ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             </section>
           )}

@@ -115,16 +115,19 @@ URL that bypasses `Home.tsx` (admin pages, `ContentDetail`,
 their own self-contained classes instead (see `admin-shared.css` and
 `InscriptionForm.css` for the pattern).
 
-### Home page carousel
+### Carousels
 
-`Home.tsx` implements a custom infinite-loop carousel (`useInfiniteCarousel`,
-defined inline in the file) shared by the Cursos/Eventos/Noticias sections —
-clone-padded rendering with modulo-based index wrapping. It assumes a
-non-empty items array; `Home.tsx` renders a loading/empty skeleton instead
-of mounting the carousel markup rather than special-casing zero-length
-input inside the hook (the example data in `src/data/` is never actually
-empty, but the guard is kept for parity with the original and in case a
-fork empties out `src/data/content.ts`).
+`Home.tsx` (Cursos/Eventos/Noticias/Sponsors) and `ContentDetail` (últimas
+noticias) share [useInfiniteCarousel](src/hooks/useInfiniteCarousel.ts):
+clone-padded infinite loop that returns `wrapperProps`/`trackProps` to spread
+onto the markup, plus `next`/`prev`/`canNavigate`/`isClone`. It owns drag/swipe,
+queued input during transitions, optional autoplay (`autoplayMs`; pauses on
+hover/focus/drag/off-screen/hidden tab/reduced motion) and a timeout fallback
+against a missing `transitionend`. Dot indicators come from `total`/`activeDot`/`goTo`. Lists that fit
+in one view render static with no arrows. It assumes a non-empty items array,
+so callers pass `Math.max(len, 1)` and render a loading/empty state instead of
+the carousel markup. The Nosotros mobile slideshow in `Home.tsx` is a separate,
+simpler non-looping slider.
 
 ### Placeholder images
 
